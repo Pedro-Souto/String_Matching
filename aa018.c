@@ -20,21 +20,20 @@ int main(int argc, char *argv[]) {
 	char* text = NULL;
 	char* auxiliar = NULL;
 	FILE *stream;
-	char *line = NULL;
-	int len = 0;
+	char line[10240];
 
 	stream = stdin;
 	if (stream == NULL) {
+		printf("ERRO!!\n");
 	    exit(EXIT_FAILURE);
 	}
-	while ((fgets(line, len, stream)) != NULL) {
+	while ((fgets(line, sizeof line, stream)) != NULL) {
 
 	    int i;
 
 	    for (i = 0; i < strlen(line); i++) {
 
 	    	int size = 2;
-	    	
 	    	char* comutador_text = "T ";
 	    	char* comutador_naive = "N ";
 	    	char* comutador_KMP = "K ";
@@ -78,7 +77,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	free(line);
 	free(text);
 	free(target);
 	fclose(stream);
