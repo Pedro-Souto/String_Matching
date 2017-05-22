@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
+#define MAXSIZE 9048
 #define max(x,y) ((x) >= (y)) ? (x) : (y)
 
-void algoSelector(char* selector, char* target, char* text);
+void algoSelector(char selector, char* target, char* text);
 void naiveAproach(char* target, char* text);
 void KMP(char* target, char* text);
 void KMP_Matcher(char* target, char* text, int size_text_n, int size_target_m);
@@ -13,77 +16,84 @@ int *BoyerMoore_PreProcess_badChar(char* target, int size_target_m);
 int *BoyerMoore_goodSuffix(char* target, int size_target_m);
 void BoyerMoore_Matcher(char* target, char* text, int size_text_n, int size_target_m);
 int checkerBM(char letra);
+void processBlock();
+
+char* doText(char* string, int *size){
+    
+  int used = 0;
+
+  int freeSpace = (*size);
+  char c;
+  while( (c=getchar())!='\n'){
+      if ( c== ' '){
+        continue;
+      }
+      else if (freeSpace > 0){
+          string[used]= c;
+          freeSpace--;
+          used++;
+      }
+      else{
+          string = (char*)realloc(string,2*(*size));
+          string[used] = c;
+          used++;
+          freeSpace = (*size)-1;
+          *size = 2*(*size);
+      }
+  }
+  string[used]='\0';
+  freeSpace--;
+  used++;
+  while(used < ((*size)*0.25)){
+    *size = (*size)/2;
+    string = (char*) realloc(string, (*size));
+
+  }
+  return string;
+}
 
 int main(int argc, char *argv[]) {
 
-    size_t newSize = 2250;
-    char* text = (char*)calloc(newSize, sizeof(char));
-    char* line = (char*)calloc(newSize, sizeof(char));
-    FILE* stream;
+    getchar();
 
-    size_t size = 2;
-    char* comutador_text = "T ";
-    char* comutador_naive = "N ";
-    char* comutador_KMP = "K ";
-    char* comutador_BM = "B ";
-
-    stream = fopen(argv[1], "r");
-    if (stream == NULL) {
-        printf("ERRO!!\n");
-        exit(EXIT_FAILURE);
+    while(true){
+        processBlock();
     }
 
-    while (fscanf(stream, " %[^\n]",line) == 1){
-
-        size_t size_line = strlen(line);
-
-        if (size_line > newSize) {
-            newSize = 2*newSize;
-            line = (char*)malloc(newSize * sizeof(char));
-            fseek(stream, -size_line, SEEK_CUR);
-        } else {
-            if (0 == strncmp(&(line[0]),comutador_text,size)) {
-
-                char auxiliar[newSize];
-                memcpy(auxiliar, &line[size],(1+ strlen(line)-size));
-                text = (char*)calloc(strlen(auxiliar), sizeof(char));
-                strcpy(text,auxiliar);
-
-            } else if (0 == strncmp(&(line[0]),comutador_naive,size)) {
-
-                char target_NV[newSize];
-                memcpy(target_NV, &line[size],(1+ strlen(line)-size));
-                algoSelector(comutador_naive, target_NV, text);
-
-            } else if (0 == strncmp(&(line[0]),comutador_KMP,size)) {
-
-                char target_KMP[newSize];
-                memcpy(target_KMP, &line[size],(1+ strlen(line)-size));
-                algoSelector(comutador_KMP, target_KMP, text);
-
-            } else if (0 == strncmp(&(line[0]),comutador_BM,size)) {
-
-                char target_BM[newSize];
-                memcpy(target_BM, &line[size],(1+ strlen(line)-size));
-                algoSelector(comutador_BM, target_BM, text);
-            }
-        }
-    }
-
-    free(line);
-    free(text);
-    fclose(stream);
-    return 0;
+    return EXIT_SUCCESS;
 }
 
+void processBlock(){
 
-void algoSelector(char* selector, char* target, char* text){
+    getchar();
 
-    if (strcmp(selector,"N ") == 0) {
+    char text[MAXSIZE];
+    scanf("%s", text);
+    getchar();
+
+    while(true){
+
+        char rule;
+        scanf("%c", &rule);
+
+        if(rule == 'T') break;
+        if(rule == 'X') exit(0);
+
+        char target[MAXSIZE];
+        scanf("%s", target);
+
+        algoSelector(rule, target, text);
+        getchar();
+    }
+}
+
+void algoSelector(char selector, char* target, char* text){
+
+    if (selector=='N') {
         naiveAproach(target, text);
-    } else if (strcmp(selector,"K ") == 0) {
+    } else if (selector=='K') {
         KMP(target,text);
-    } else if (strcmp(selector,"B ") == 0) {
+    } else if (selector=='B') {
         BoyerMoore(target,text);
     }
 }
@@ -117,7 +127,7 @@ int *KMP_Prefix(char* target, int size_target_m){
     int *prefix_pi = malloc(sizeof(int)*size_target_m);
 
     prefix_pi[q]=0;
-    for (q = 1; q < size_target_m; q++)	{
+    for (q = 1; q < size_target_m; q++) {
         while ( k > 0 && target[k] != target[q]) k = prefix_pi[k-1];
         if (target[k] == target[q]) k++;
         prefix_pi[q] = k;
@@ -179,7 +189,7 @@ int *BoyerMoore_PreProcess_badChar(char* target, int size_target_m){
 
 int *BoyerMoore_goodSuffix(char* target, int size_target_m){
     int g = 0, i = 0, j = 0, f = 0;
-    int *goodSuffix_auxiliar = malloc(sizeof(int)*(size_target_m));
+    int goodSuffix_auxiliar[size_target_m];
     int *move_goodSuffix = malloc(sizeof(int)*(size_target_m));
 
     goodSuffix_auxiliar[size_target_m-1] = size_target_m;
@@ -213,7 +223,6 @@ int *BoyerMoore_goodSuffix(char* target, int size_target_m){
         move_goodSuffix[size_target_m - 1 - goodSuffix_auxiliar[i]] = size_target_m - 1 - i;
     }
 
-    free(goodSuffix_auxiliar);
     return move_goodSuffix;
 }
 
